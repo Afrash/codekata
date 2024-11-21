@@ -14,53 +14,97 @@ final class GildedRose
     ) {
     }
 
+    public function qualityIsNeverNegative(Item $item): void
+    {
+        if ($item->quality < 0) {
+            $item->quality = 0;
+        }
+    }
+
+    public function qualityIsNeverMoreThenFifty(Item $item): void
+    {
+        if ($item->quality > 50) {
+            $item->quality = 50;
+        }
+    }
+
+    public function default(Item $item): void
+    {
+        $item->sellIn--;
+
+        if ($item->sellIn < 0) {
+            $item->quality -= 2;
+        } else {
+            $item->quality--;
+        }
+
+        $this->qualityIsNeverNegative($item);
+
+        $this->qualityIsNeverMoreThenFifty($item);
+    }
+
+    public function backStage(Item $item): void
+    {
+        if ($item->sellIn > 0) {
+            $item->quality++;
+
+            if ($item->sellIn < 11) {
+                $item->quality++;
+                if ($item->sellIn < 6) {
+                    $item->quality++;
+                }
+            }
+        } else {
+            $item->quality = 0;
+        }
+
+        $item->sellIn--;
+
+        $this->qualityIsNeverMoreThenFifty($item);
+    }
+
+    public function brie(Item $item): void
+    {
+        if ($item->quality < 50) {
+            $item->quality++;
+        }
+
+        $item->sellIn--;
+
+        if ($item->sellIn < 0 && $item->quality < 50) {
+            $item->quality++;
+        }
+    }
+
+    public function conjures(Item $item): void
+    {
+        $item->quality -= 2;
+
+        $item->sellIn--;
+
+        $this->qualityIsNeverNegative($item);
+
+        $this->qualityIsNeverMoreThenFifty($item);
+    }
+
+    public function sulfaras(Item $item): void
+    {
+        $item->quality = 80;
+    }
+
     public function updateQuality(): void
     {
         foreach ($this->items as $item) {
-            if ($item->name != 'Aged Brie' and $item->name != 'Backstage passes to a TAFKAL80ETC concert') {
-                if ($item->quality > 0) {
-                    if ($item->name != 'Sulfuras, Hand of Ragnaros') {
-                        $item->quality = $item->quality - 1;
-                    }
-                }
+            if ($item->name === ItemStatus::Backstage->value) {
+                $this->backStage($item);
+            } elseif ($item->name === ItemStatus::AgedBrie->value) {
+                $this->brie($item);
+            } elseif ($item->name === ItemStatus::Conjured->value) {
+                $this->conjures($item);
+            } elseif ($item->name === ItemStatus::Sulfuras->value) {
+                $this->sulfaras($item);
             } else {
-                if ($item->quality < 50) {
-                    $item->quality = $item->quality + 1;
-                    if ($item->name == 'Backstage passes to a TAFKAL80ETC concert') {
-                        if ($item->sellIn < 11) {
-                            if ($item->quality < 50) {
-                                $item->quality = $item->quality + 1;
-                            }
-                        }
-                        if ($item->sellIn < 6) {
-                            if ($item->quality < 50) {
-                                $item->quality = $item->quality + 1;
-                            }
-                        }
-                    }
-                }
-            }
-
-            if ($item->name != 'Sulfuras, Hand of Ragnaros') {
-                $item->sellIn = $item->sellIn - 1;
-            }
-
-            if ($item->sellIn < 0) {
-                if ($item->name != 'Aged Brie') {
-                    if ($item->name != 'Backstage passes to a TAFKAL80ETC concert') {
-                        if ($item->quality > 0) {
-                            if ($item->name != 'Sulfuras, Hand of Ragnaros') {
-                                $item->quality = $item->quality - 1;
-                            }
-                        }
-                    } else {
-                        $item->quality = $item->quality - $item->quality;
-                    }
-                } else {
-                    if ($item->quality < 50) {
-                        $item->quality = $item->quality + 1;
-                    }
-                }
+                $this->default($item);
             }
         }
     }
